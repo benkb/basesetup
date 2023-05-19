@@ -1,0 +1,36 @@
+#!/bin/sh
+USAGE='realpath [args] [file ...]'
+#
+# resolve symbolic links
+#
+#
+input=${1:-}
+
+die () { echo "$@" >&2; exit 1; }
+
+[ -n "$input" ] || die "usage: $USAGE"
+
+_realpath () {
+   perl -MCwd -e 'print Cwd::realpath($ARGV[0])' $1
+}
+
+for rp in /bin/realpath /usr/bin/realpath /usr/local/bin/realpath; do
+   if [ -f "$rp" ] ; then
+      ${rp} $@
+      exit
+   fi
+done
+
+
+if [ -e "$input" ] ; then
+  if command -v readlink  &> /dev/null ; then
+     readlink -f "$input"
+
+  else
+     _realpath "$input"
+  fi
+else
+   die "Err: invalid input"
+fi
+
+

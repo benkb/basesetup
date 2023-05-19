@@ -1,0 +1,68 @@
+# ~/.bashrc:  
+# - configurations for interactive Bash usage , aliases, favorite editor, config the bash prompt
+# - executed by bash for interactive non-login shells.
+
+
+
+
+# in this setup ~/.bashrc is called by .bash_profile
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+set -o vi
+
+
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+
+# cargo
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+# MacPorts Installer addition on 2020-03-09_at_11:13:24: adding an appropriate PATH variable for use with MacPorts.
+# Finished adapting your PATH environment variable for use with MacPorts.
+[[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && {
+   . "/usr/local/etc/profile.d/bash_completion.sh"
+   }
+# don't put duplicate lines or lines starting with space in the history.
+
+##### ~/.profile  OR exit !!!!!
+#
+if [ -f "$HOME/.profile" ] ; then
+   # shell agnostic profile
+   . "$HOME/.profile"
+else
+   echo 'Warn: could not locate ~/.profile'
+   echo 'premature exiting of ~/.bashrc'
+   exit
+fi
+
+## Depending on ~/.profile
+
+if [ -n "$PATHBINS" ] ; then
+   for d in $PATHBINS ; do
+      [ -e "$d" ] && { PATH="$d:$PATH"; }
+   done
+fi
+
+ALIASES_DIR="$HOME/.local/aliases"
+if [ -n "$ALIASES_DIR" ] ; then
+   for aliasfile in $ALIASES_DIR/*.sh ; do
+      [ -f "$aliasfile" ] && source "$aliasfile"
+   done
+fi
+

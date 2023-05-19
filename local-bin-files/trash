@@ -1,0 +1,188 @@
+#!/bin/sh
+
+# use this instead of 'rm' to get a secure agains accidental deletes
+#
+# Commands:
+# del    delete a file or folder
+# latest get the latest trash folder
+#
+#
+# Options:
+# -h|--help print help message
+#
+
+USAGE='[options] <command> [<file> or <folder> ...]'
+
+LOG=1
+
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+
+TRASH_DIR="$DATA_HOME"/trash
+
+set -eu
+
+
+# --- utils
+#
+warn() { echo "$@" 1>&2; }
+die() { echo "$@" 1>&2;  exit 1; }
+
+[ -d "$DATA_HOME" ] || die "Err: data home '$DATA_HOME' not exists"
+
+mkdir -p "$TRASH_DIR"
+
+# securely link something to a target
+# create a backup if already exists
+#
+_item_to_target () {
+   local action="$1"
+   local source_item="$2"
+   local target_dir="$3"
+   local item_name="$4"
+   local log="${5:-}"
+
+   [ -e "$source_item" ] || {
+      echo "Err: invalid source_item $source_item"
+      exit 1
+   }
+   [ -d "$target_dir" ] || {
+      echo "Err: target_dir '$target_dir'  not exists"
+      exit 1
+   }
+
+   local target_item="$target_dir/$item_name"
+
+   # doing my best to not be too destructive
+   if [ -e "$target_item" ] ; then
+      [ -L "$target_item" ] || {      # symbolic are not moved
+         stamp=$(date +%Y%m%d_%H%M%S)
+         [ -n "$stamp" ] || {
+            echo "Err: no stamp "
+            exit 1
+         }
+
+         local target_item_backup="$target_item"_"$stamp"
+
+         if [ -e "$target_item_backup" ] ; then
+            echo  "Warn: wait 2 secs for a new timestamp" 1>&2
+            sleep 2
+            stamp=$(date +%Y%m%d_%H%M%S)
+            target_item_backup="$target_item"_"$stamp"
+         fi
+
+         if [ -e "$target_item_backup" ] ; then
+            echo "Err: cannot move, path '$target_item_backup' already exists"
+            exit 1
+         else
+            [ -n "$log" ] && echo mv "$target_item" "$target_item_backup"
+            mv "$target_item" "$target_item_backup"
+         fi
+      }
+   fi
+
+   # Make sure also broken stuff is removed
+   [ -n "$log" ] && echo rm -f "$target_item"
+   rm -f "$target_item"
+
+   [ -n "$log"  ] && echo $action "$source_item" "$target_item"
+
+   case "$action" in
+      ln ) ln -s "$source_item" "$target_item";;
+      mv ) mv "$source_item" "$target_item";;
+      cp ) cp -r  "$source_item" "$target_item";;
+      *) 
+         echo "Err: invalid action '$action'"
+         exit 1
+         ;;
+   esac
+
+}
+
+
+usage() {
+   warn "usage: $(basename "${0%.*}")  $USAGE"
+   [ "${1:-}" = "" ] || exit "$1"
+}
+
+help() {
+   usage
+   echo ""
+   # write help message until USAGE='' var
+   sed -n -e '/^USAGE=/q ; s/^# \(.*\)/\1/p' "$0" 1>&2
+   exit 1
+}
+
+# ---- args
+
+for arg in $@; do
+   case "$arg" in
+      -h | --help) help ;;
+      -*) die "Err: invalid option $1" ;;
+      *) : ;;
+   esac
+done
+
+cmd="${1:-}"
+arg="${2:-}"
+
+[ "$cmd" = "" ] && usage 1
+
+# ---- basics
+#
+
+# --- commands ---
+
+latest() {
+
+   # print last dir that contains trashed items
+   # and then exit
+
+   local lastdir="$(ls -td "$TRASH_DIR"/* | head -1)"
+
+   [ "$lastdir" = "" ] && die "Err: could not get the last directory"
+
+   ls -d "$lastdir"/*
+}
+
+del() {
+   local item="$1"
+
+   [ -e "$item" ] || die "Err: item '$item' not exists"
+
+   local stamp=$(date "+%F_%H%M%S")
+
+   local trashitem="$stamp"_"$item"
+
+   _item_to_target 'mv' "$item" "$TRASH_DIR" "$trashitem" "$LOG"
+
+}
+
+# --- commands ---
+
+latest() {
+
+   # print last dir that contains trashed items
+   # and then exit
+
+   local lastdir="$(ls -td "$TRASH_DIR"/* | head -1)"
+
+   [ "$lastdir" = "" ] && die "Err: could not get the last directory"
+
+   ls -d "$lastdir"/*
+}
+
+
+
+case "$cmd" in
+   del)
+      del "$arg"
+      ;;
+   latest)
+      latest
+      exit
+      ;;
+   *)
+      die "Err: '$cmd' is invalid cmd, see --help"
+      ;;
+esac
+

@@ -1,0 +1,85 @@
+#!/bin/sh
+
+# # function Extract for common file formats 
+#
+# Options:
+# -h|--help    Get help
+
+USAGE='[options] <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>'
+
+item=${1:-}
+
+set -eu
+
+# --- utils ---
+
+SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+warn() {
+	echo "$@" 1>&2
+}
+die() {
+	echo "$@" 1>&2
+	exit 1
+}
+usage() {
+	warn "usage: $(basename "${0%.*}")  $USAGE"
+
+	[ "${1:-}" = "" ] || exit "$1"
+}
+help() {
+	usage
+   warn ""
+	sed -n -e '/^USAGE=/q ; s/^# \(.*\)/\1/p' "$0" 1>&2
+	exit 1
+}
+
+
+# --- cli args and globals ---
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-h | --help) help ;;
+	-*) die "Err: invalid option $1" ;;
+	*) : ;;
+	esac
+	shift
+done
+
+
+[ "$item" = "" ] && usage 1
+[ -e "$item" ] || die "Err: item '$item' not exists"
+
+function extract {
+   local file="$1"
+
+   case "$file" in
+      *.tar.bz2)   tar xvjf "$file"    ;;
+      *.tar.gz)    tar xvzf "$file"    ;;
+      *.tar.xz)    tar xvJf "$file"    ;;
+      *.lzma)      unlzma "$file"      ;;
+      *.bz2)       bunzip2 "$file"     ;;
+      *.rar)       unrar x -ad "$file" ;;
+      *.gz)        gunzip "$file"      ;;
+      *.tar)       tar xvf "$file"     ;;
+      *.tbz2)      tar xvjf "$file"    ;;
+      *.tgz)       tar xvzf "$file"    ;;
+      *.zip)       unzip "$file"       ;;
+      *.Z)         uncompress "$file"  ;;
+      *.7z)        7z x "$file"        ;;
+      *.xz)        unxz "$file"        ;;
+      *.exe)       cabextract "$file"  ;;
+      *)           warn "extract: '$file' - unknown archive method" ;;
+        esac
+}
+
+if [ -f "$item" ] ; then
+   extract "$item"
+elif [ -d "$item" ] ; then
+   for f in "$item"/* ; do
+      [ -f "$f" ]  || continue
+      extract "$f"
+   done
+else
+   die "Err: '$item' ist not a valid path"
+fi

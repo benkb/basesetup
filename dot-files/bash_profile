@@ -1,0 +1,6 @@
+source ~/.profile
+# bash_profile: loaded in interactive login shell
+
+
+[ -f ~/.bashrc ] && . ~/.bashrc; 
+
