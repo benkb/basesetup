@@ -188,3 +188,14 @@ vnoremap a j
 if v:progname ==? 'vim'
    nnoremap s :w<cr>:syn sync fromstart<cr>
 endif
+
+if has('conceal')
+    if has('autocmd')
+        autocmd Syntax * syn keyword Operator not conceal cchar=¬
+        autocmd Syntax * syn keyword Operator lambda conceal cchar=λ
+        autocmd Syntax ruby syn match rubyKeyword "->" conceal cchar=λ
+        autocmd Syntax haskell syn match hsKeyword "\\" conceal cchar=λ
+    endif
+    hi! link Conceal Operator
+    set conceallevel=2
+endif

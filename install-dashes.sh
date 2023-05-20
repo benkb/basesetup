@@ -100,7 +100,7 @@ link_dashfile() {
    fi
 }
 
-link_dashdir() {
+install_in_dashdir() {
    local source_dir="$1"
    local target_dir="$2"
    local dot="${3:-}"
@@ -119,7 +119,7 @@ link_dashdir() {
             local dirpath=$(echo "$bi" | perl -pe 's/\-/\//g')
             local entire_path=$target_dir/$dot$dirpath
             [ -d "$entire_path" ] || mkdir -p "$entire_path"
-            link_dashdir "$i" "$entire_path"
+            install_in_dashdir "$i" "$entire_path"
             ;;
          esac
       elif [ -f "$i" ]; then
@@ -145,55 +145,75 @@ install_dash() {
    for dir in "$source_dir"/*; do
       [ -d "$dir" ] || continue
       basedir=$(basename "$dir")
-      if [ -d "$dir" ]; then
-         case "$basedir" in
-         *-*)
-            local first_dir=${basedir%%-*}
-            local last=${basedir##*-}
-            local withoutlast=${basedir%-*}
-            local middle_dir=$(echo "$withoutlast" | perl -pe 's/\-/\//g')
-            local home_dir="$HOME/.$middle_dir"
+      case "$basedir" in
+         *_dot-link|*-dot-link|dot-link)
+            die "Err: invalid dash dirs dot-link '$basedir'"
+            ;;
+         *_dot-files|*-dot-files)
+            die "Err: invalid dash dirs dot-files '$basedir'"
+            ;;
+         *_*_*-link|*_*-*-files)
+            die "Err: invalid dash dirs"
+            ;;
+         dot-files)
+            install_in_dashdir "$dir" "$HOME" '.'
+            ;;
+         *-link|*-files) # foo-bar_config-files ~/.config/foo/bar qux_baba-files -> ~/.baba/qux
+            local dash_part=${basedir##*_}
+            case "$dash_part" in
+               *-*-*) die "Err: invalid dash part in $dash_part" ;;
+               *) : ;;
+            esac
+            local dot_dir="${dash_part%-*}"
+            local home_dot_dir=$HOME/.$dot_dir
 
-            case "$last" in
-            link) 
-               if [ "$first_dir" = 'dot' ] ; then
-                  die "Err: 'dot-link' is not allowed"
-               else
-                  if [ -e "$home_dir" ] ; then
-                     if [ -L "$home_dir" ] ; then
-                        rm -f "$home_dir"
-                     else
-                        die "Err: target dir '$home_dir' already exists"
-                     fi
+            local dir_part=${basedir%_*}
+            local target_dir=
+            if [ "$dir_part" = "$dash_part" ] ; then # no '_' delimiter
+               target_dir="$home_dot_dir"
+            else
+               case "$dir_part" in
+               *-*)
+                  local middle_dir=$(perl -e 'print(join("/",reverse(split("-", $ARGV[0])))' "$dir_part")
+                  target_dir=$home_dot_dir/$middle_dir
+               ;;
+               *)
+                  target_dir=$home_dot_dir/$dir_part
+               ;;
+               esac
+            fi
+
+            local target_dir_parent=$(dirname "$target_dir")
+            mkdir -p "$target_dir_parent"
+
+            local dash_type="${dash_part##*-}"
+
+            case "$dash_type" in
+               link) 
+                  if [ -e "$target_dir" ] ; then
+                     [ -L "$target_dir" ] || die "Err: target $target_dir not a link"
+                        rm -f "$target_dir"
                   fi
-                  [ "$middle_dir" = "$first_dir" ] || {
-                     local dir_parent=$(dirname "$home_dir")
-                     mkdir -p "$dir_parent"
-                  }
-                  ln -s "$dir" "$home_dir"
-               fi
+                     ln -s "$dir" "$target_dir"
+                  ;;
+               files) 
+                  install_in_dashdir "$dir" "$target_dir"
+                  ;;
+               *)
+                  die "Err: wrong type '$dash_type'"
+            esac
             ;;
-            files)
-               if [ "$first_dir" = 'dot' ] ; then
-                  [ "$middle_dir" = "$first_dir" ] || die "Err: 'dot-files' cannot have more than one dash in dir '$dir'"
-               else
-                  [ "$middle_dir" = "$first_dir" ] || { 
-                     local dir_parent=$(dirname "$home_dir")
-                     mkdir -p "$dir_parent"
-                  }
-                  link_dashdir "$dir" "$home_dir"
-               fi
+         *) 
+            :
             ;;
-            *) : ;;
-         esac
-         ;;
-         *) : ;;
-         esac
-      fi
+      esac
    done
 }
 
+
+
 install_dash "$SOURCE_DIR"
+
 
 
 ##### Linking stuff to the linkpool, or leave
