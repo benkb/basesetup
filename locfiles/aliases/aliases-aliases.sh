@@ -7,9 +7,9 @@ alias chmox='chmod 0755'
 alias findi='find . -iname'
 
 
-alias ,trash="/usr/bin/env dash '$HOME'/.local/bin/trash"
+alias ,trash="sh '$HOME'/.local/bin/trash"
 alias trash=,trash
-alias ,del="/usr/bin/env dash '$HOME'/.local/bin/trash del"
+alias ,del="sh '$HOME'/.local/bin/trash del"
 alias del=,del
 alias ,rename="/usr/bin/env perl '$HOME'/.local/bin/rename"
 
@@ -21,3 +21,4 @@ alias ,more='more -R'
 
 alias ,shfmt='shfmt -i 3 -w'
 
+alias p=pick

@@ -18,9 +18,13 @@ export PERL5LIB=$HOME/.local/lib/perl
 export GOPATH=$HOME/go
 export GOROOT=/usr/local/opt/go/libexec
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin"
-export PATHBINS="/opt/bin /opt/sbin /usr/local/bin /usr/local/sbin /opt/local/bin /opt/local/sbin $HOME/bin $HOME/.local/bin $HOME/local/bin $HOME/builds/bin $HOME/.cargo/bin $GOPATH/bin $GOROOT/bin $HOME/tools/bin /Applications/MAMP/bin/php/php8.1.0/bin /usr/local/opt/janet/bin/  /usr/local/opt/gambit-scheme/current/bin/ /usr/local/opt/llvm/bin/ $HOME/local/flutter/flutter/bin $HOME/builds/dale/build $HOME/.opam/default/bin"
+export PATHBINS="/opt/bin /opt/sbin /usr/local/bin /usr/local/sbin /opt/local/bin /opt/local/sbin $HOME/bin $HOME/.local/bin $HOME/.local/utils $HOME/.local/moreutils $HOME/local/bin $HOME/builds/bin $HOME/.cargo/bin $GOPATH/bin $GOROOT/bin $HOME/tools/bin /Applications/MAMP/bin/php/php8.1.0/bin /usr/local/opt/janet/bin/  /usr/local/opt/gambit-scheme/current/bin/ /usr/local/opt/llvm/bin/ $HOME/local/flutter/flutter/bin $HOME/builds/dale/build $HOME/.opam/default/bin"
 # nvm node version manager
 export NVM_DIR="$HOME/.nvm"
 # Setting for the new UTF-8 terminal support in Lion
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export OPAM_LD_LIBRARY_PATH=$HOME/.opam/default/lib/stublibs
+export CAML_LD_LIBRARY_PATH="$OPAM_LD_LIBRARY_PATH"
+#alias perl='/Applications/MAMP/Library/bin/perl'
+#alias cpan='/Applications/MAMP/Library/bin/cpan'

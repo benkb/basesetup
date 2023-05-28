@@ -13,7 +13,7 @@
 
 USAGE='[options] <command> [<file> or <folder> ...]'
 
-LOG=1
+LOGLVL=1
 
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
@@ -27,6 +27,13 @@ set -eu
 warn() { echo "$@" 1>&2; }
 die() { echo "$@" 1>&2;  exit 1; }
 
+log() {
+   local lvl="$1"
+   shift
+   [ $lvl -gt $LOGLVL ] ||  warn "$@" ; 
+} 
+
+
 [ -d "$DATA_HOME" ] || die "Err: data home '$DATA_HOME' not exists"
 
 mkdir -p "$TRASH_DIR"
@@ -39,7 +46,6 @@ _item_to_target () {
    local source_item="$2"
    local target_dir="$3"
    local item_name="$4"
-   local log="${5:-}"
 
    [ -e "$source_item" ] || {
       echo "Err: invalid source_item $source_item"
@@ -74,17 +80,17 @@ _item_to_target () {
             echo "Err: cannot move, path '$target_item_backup' already exists"
             exit 1
          else
-            [ -n "$log" ] && echo mv "$target_item" "$target_item_backup"
+            echo log 1  "mv $target_item $target_item_backup"
             mv "$target_item" "$target_item_backup"
          fi
       }
    fi
 
    # Make sure also broken stuff is removed
-   [ -n "$log" ] && echo rm -f "$target_item"
+   log 2  "rm -f $target_item"
    rm -f "$target_item"
 
-   [ -n "$log"  ] && echo $action "$source_item" "$target_item"
+   log 1 "$action $source_item $target_item"
 
    case "$action" in
       ln ) ln -s "$source_item" "$target_item";;
@@ -153,7 +159,7 @@ del() {
 
    local trashitem="$stamp"_"$item"
 
-   _item_to_target 'mv' "$item" "$TRASH_DIR" "$trashitem" "$LOG"
+   _item_to_target 'mv' "$item" "$TRASH_DIR" "$trashitem"
 
 }
 

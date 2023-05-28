@@ -1,7 +1,7 @@
 # link files like
-# config-files -> .config/
-# cache-files -> .cache/
-# local-files -> .local/
+# dotfiles -> .
+# confiles -> .config/
+# locfiles -> .local/
 # else: -> .local/foo/
 
 USAGE='[sourcdir] <targetdir> '
@@ -30,8 +30,8 @@ case "$#" in
 esac
 
 BASELIB=
-if [ -f "$PWD"/local-dotfiles/lib-baselib.sh ]; then
-   BASELIB="$PWD"/local-dotfiles/lib-baselib.sh
+if [ -f "$PWD"/locfiles/lib-baselib.sh ]; then
+   BASELIB="$PWD"/locfiles/lib-baselib.sh
 elif [ -f "$LIB_DIR"/baselib.sh ]; then
    BASELIB="$LIB_DIR"/baselib.sh
 else
@@ -124,6 +124,12 @@ install_dash() {
          *_*files|*[_-]*_*link|files|link|dotlink)
             die "Err: invalid dash dirs -files '$basedir'"
             ;;
+         confiles)
+            install_in_dashdir "$dir" "$base_dir/.config"
+            ;;
+         locfiles)
+            install_in_dashdir "$dir" "$base_dir/.local"
+            ;;
          dotfiles)
             install_in_dashdir "$dir" "$base_dir" '.'
             ;;
@@ -178,8 +184,6 @@ install_dash() {
 
 
 install_dash "$SOURCE_DIR" "$BASE_DIR"
-
-
 
 
 # if the base is ~/ then link the entire folder into ~/.local/share
